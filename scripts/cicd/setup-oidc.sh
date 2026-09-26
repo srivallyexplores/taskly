@@ -24,7 +24,7 @@ echo ""
 # Get account ID automatically
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 echo "AWS Account ID: ${ACCOUNT_ID}"
-echo "GitHub Repo: suletetes/taskly"
+echo "GitHub Repo: srivallyexplores/taskly"
 echo ""
 
 # Update trust policy with actual account ID

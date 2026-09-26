@@ -59,7 +59,7 @@ Security: VPC with private subnets, security groups, NAT gateway, WAF rate limit
 
 ```bash
 # Clone
-git clone https://github.com/suletetes/taskly.git
+git clone https://github.com/srivallyexplores/taskly.git
 cd taskly
 
 # Backend

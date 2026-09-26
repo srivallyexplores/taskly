@@ -28,14 +28,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/suletetes/taskly.git"
+    "url": "git+https://github.com/srivallyexplores/taskly.git"
   },
   "author": "suleiman",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/suletetes/taskly/issues"
+    "url": "https://github.com/srivallyexplores/taskly/issues"
   },
-  "homepage": "https://github.com/suletetes/taskly#readme",
+  "homepage": "https://github.com/srivallyexplores/taskly#readme",
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
