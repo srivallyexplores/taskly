@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Build the four Lambda deployment bundles from backend/ and stage them, resolving the chicken-and-egg ordering (the uploads bucket that stores the zips is created by the same Terraform run). Approach: create a reusable build script that produces the zips, do a targeted `terraform apply -target=module.s3` first to create the uploads bucket, upload the zips to s3://<uploads-bucket>/deploy/, then the full apply in FEAT-003 will find them. This keeps the lambda module unchanged (it already has lifecycle ignore_changes on s3_key).",
+  "status": "completed",
+  "steps": [
+    "Create scripts/build-lambda.sh (repo root scripts/ dir; create if absent). It must: (a) source ~/.nvm/nvm.sh && nvm use 20; (b) cd backend; (c) npm install --omit=dev (production deps only); (d) download the DocumentDB TLS bundle to backend/global-bundle.pem from https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem; (e) produce build/api-handler.zip containing at ROOT level: index.mjs, server.js, package.json, schemas.js, global-bundle.pem, and directories lambda/ config/ controllers/ middleware/ models/ routes/ services/ utils/ node_modules/ (use `zip -r -q`); (f) produce build/achievement-processor.zip, build/notification-processor.zip, build/email-processor.zip. Because processors use handler path lambda/processors/<name>.handler and import shared code (../server.js, ../utils/secrets.js) plus node_modules, the simplest correct approach is to make all four zips identical to the api-handler bundle (same full backend contents) so every handler path resolves. Document this in the script comments.",
+    "Make the script idempotent and parameterized by an output dir (default backend/build). Ensure zips have files at archive root (zip from inside backend/, not the parent).",
+    "Run the build script: `bash scripts/build-lambda.sh`. Confirm the four zips exist under backend/build and that `unzip -l backend/build/api-handler.zip | grep -E 'index.mjs|lambda/handler.js|node_modules/@vendia'` shows those entries at root.",
+    "Create the uploads bucket via targeted apply: `cd infrastructure/environments/dev && TF_VAR_documentdb_master_password=$TF_VAR_documentdb_master_password TF_VAR_jwt_signing_key=$TF_VAR_jwt_signing_key terraform apply -target=module.taskly.module.s3 -auto-approve`. (Real secret TF_VARs must be exported in the shell; see FEAT-003 for how they are generated. If not yet generated, generate them now and persist in the shell/session so FEAT-003 reuses the SAME values.)",
+    "Resolve the uploads bucket name: `terraform output -raw s3_uploads_bucket` (or `terraform state show` the s3 module). Upload the zips: `aws s3 cp backend/build/api-handler.zip s3://<bucket>/deploy/api-handler.zip` and likewise achievement-processor.zip, notification-processor.zip, email-processor.zip under deploy/.",
+    "Verify all four objects exist: `aws s3 ls s3://<bucket>/deploy/`."
+  ],
+  "acceptance_criteria": [
+    "scripts/build-lambda.sh exists, is committed, and regenerates all four zips deterministically",
+    "backend/build/api-handler.zip has index.mjs and lambda/handler.js and node_modules/@vendia/serverless-express at archive ROOT (verified via unzip -l)",
+    "The uploads S3 bucket exists (created via targeted apply of module.s3)",
+    "s3://<uploads-bucket>/deploy/ contains api-handler.zip, achievement-processor.zip, notification-processor.zip, email-processor.zip"
+  ],
+  "verification": [
+    "unzip -l backend/build/api-handler.zip | grep -E 'index.mjs|lambda/handler.js|@vendia/serverless-express' | head",
+    "cd infrastructure/environments/dev && terraform output -raw s3_uploads_bucket",
+    "aws s3 ls s3://$(cd infrastructure/environments/dev && terraform output -raw s3_uploads_bucket)/deploy/"
+  ],
+  "blocked_reason": null,
+  "findings": "Uploads bucket name: taskly-dev-uploads-583168584925 (region us-east-1). All four zips uploaded to s3://taskly-dev-uploads-583168584925/deploy/ (api-handler.zip, achievement-processor.zip, notification-processor.zip, email-processor.zip; each ~101MB, identical full-backend bundle). scripts/build-lambda.sh created and committed; it makes all four zips identical to resolve every handler path. index.mjs and lambda/handler.js and node_modules/@vendia/serverless-express confirmed at archive ROOT. Secrets generated ONCE and persisted to infrastructure/environments/dev/secret.auto.tfvars (gitignored, NOT committed) so FEAT-003 reuses the exact same values for state consistency: documentdb_master_password (35 chars, prefix 'Aa1' + 32 hex, no forbidden / @ \" space chars) and jwt_signing_key (64 hex). openssl is NOT available in this sandbox; used /dev/urandom + od instead. Targeted apply 'terraform apply -target=module.taskly.module.s3 -auto-approve' created 10 resources with only warnings (backend-config-ignored on child-module call, and lifecycle rule filter/prefix deprecation) - no errors. Note: because it was a targeted apply, root outputs are not yet populated (terraform output -raw s3_uploads_bucket returns 'No outputs found'); bucket name read from state show. FEAT-003 full apply will populate outputs. Added backend/build/ to root .gitignore. Left pre-existing unstaged change to infrastructure/modules/secrets/lambda/rotation.zip (not part of this feature) uncommitted."
+}

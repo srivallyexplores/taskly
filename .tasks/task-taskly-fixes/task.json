@@ -1,0 +1,15 @@
+{
+  "task_id": "task-taskly-fixes",
+  "task_description": "Fix Taskly's broken functionality end to end for session-based/local usage: unify authentication (session-cookie frontend vs Bearer-only backend routes), persist profile/settings updates, repair the onboarding flow (persist to user.onboarding, fix fullname mapping, resolve empty step 4, add user + view previous onboards), set up Cloudinary image upload and the email service, reconcile frontend service calls against real backend routes, wire the existing Teams/Projects UI to the backend, repair the stale backend test suite and add a backend ESLint config, and fix CI/CD. Scope is fixes to existing functionality, not new complex features. No secrets hardcoded; no Terraform apply.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "review": "Semantic review v2 APPROVED (.tasks/task-taskly-fixes/2026-08-30-134440-review.md). v1 flagged 2 blocking issues (Add-User hijacked the admin session; CI ran only the unit jest project) - both fixed in commit b82b3b0 and confirmed by v2. One non-blocking note: admin-create is authentication-gated not role-gated, but /api/auth/register was already public so no privilege regression.",
+    "summary": "Backend: `npm run lint` exits 0 (0 errors, 123 warnings); `npm test` = 0 failed / 76 passed / 127 skipped (skips are intentional gates for live AWS/DocumentDB/Cloudinary/Resend and ESM-mock-incompatible suites); `npm run test:unit` = 21 passed. Frontend: `npm run build` succeeds. Test quality verified by reading the rewritten suites: tests/middleware/auth.test.js covers all four auth-unification cases including the security-critical Cognito-no-session-fallback; tests/routes/upload-avatar.test.js and auth.test.js use a real supertest session agent, assert DB persistence and password hashing, and would fail if handlers were reverted. Docker build skipped (no Docker daemon; docker-compose requires a Mongo container). Terraform apply intentionally not run."
+  }
+}

@@ -1,0 +1,56 @@
+import { 
+  parseCalendarParams,
+  generateCalendarUrl,
+  updateCalendarUrl,
+  validateCalendarParams,
+  getCalendarBreadcrumbs,
+  getShareableCalendarUrl,
+  parseCalendarUrl,
+  CALENDAR_VIEWS,
+  DEFAULT_VIEW,
+  URL_DATE_FORMAT
+} from '../../utils/calendarRouting';
+import { format, parse } from 'date-fns';
+
+// Mock navigate function
+const mockNavigate = jest.fn();
+
+describe('Calendar Routing Utils', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('parseCalendarParams', () => {
+    test('parses valid view and date parameters', () => {
+      const params = { view: 'week', date: '2024-01-15' };
+      const searchParams = new URLSearchParams();
+      
+      const result = parseCalendarParams(params, searchParams);
+      
+      expect(result.view).toBe('week');
+      expect(result.date).toEqual(new Date('2024-01-15'));
+      expect(result.filters).toEqual({});
+    });
+
+    test('falls back to default view for invalid view', () => {
+      const params = { view: 'invalid', date: '2024-01-15' };
+      const searchParams = new URLSearchParams();
+      
+      const result = parseCalendarParams(params, searchParams);
+      
+      expect(result.view).toBe(DEFAULT_VIEW);
+    });
+
+    test('falls back to current date for invalid date', () => {
+      const params = { view: 'month', date: 'invalid-date' };
+      const searchParams = new URLSearchParams();
+      
+      const result = parseCalendarParams(params, searchParams);
+      
+      expect(result.view).toBe('month');
+      expect(result.date).toBeInstanceOf(Date);
+    });
+
+    test('parses filter parameters from search params', () => {
+      const params = { view: 'month' };
+      const searchParams = new URLSearchParams({\n        priority: 'high,medium',\n        status: 'pending,in-progress',\n        tags: 'work,urgent'\n      });\n      \n      const result = parseCalendarParams(params, searchParams);\n      \n      expect(result.filters.priority).toEqual(['high', 'medium']);\n      expect(result.filters.status).toEqual(['pending', 'in-progress']);\n      expect(result.filters.tags).toEqual(['work', 'urgent']);\n    });\n\n    test('parses date range from search params', () => {\n      const params = { view: 'month' };\n      const searchParams = new URLSearchParams({\n        startDate: '2024-01-01',\n        endDate: '2024-01-31'\n      });\n      \n      const result = parseCalendarParams(params, searchParams);\n      \n      expect(result.filters.dateRange).toEqual({\n        start: '2024-01-01',\n        end: '2024-01-31'\n      });\n    });\n\n    test('parses selected task and search query', () => {\n      const params = { view: 'month' };\n      const searchParams = new URLSearchParams({\n        task: 'task-123',\n        q: 'search query'\n      });\n      \n      const result = parseCalendarParams(params, searchParams);\n      \n      expect(result.selectedTaskId).toBe('task-123');\n      expect(result.searchQuery).toBe('search query');\n    });\n  });\n\n  describe('generateCalendarUrl', () => {\n    test('generates basic calendar URL', () => {\n      const url = generateCalendarUrl('month', new Date('2024-01-15'));\n      \n      expect(url).toBe('/calendar/month/2024-01-15');\n    });\n\n    test('generates URL without date for today', () => {\n      const today = new Date();\n      const url = generateCalendarUrl('month', today);\n      \n      expect(url).toBe('/calendar/month');\n    });\n\n    test('includes date when explicitly requested', () => {\n      const today = new Date();\n      const url = generateCalendarUrl('month', today, { includeDate: true });\n      \n      expect(url).toBe(`/calendar/month/${format(today, URL_DATE_FORMAT)}`);\n    });\n\n    test('includes filter parameters in search params', () => {\n      const filters = {\n        priority: ['high', 'medium'],\n        status: ['pending'],\n        tags: ['work']\n      };\n      \n      const url = generateCalendarUrl('month', new Date('2024-01-15'), { filters });\n      \n      expect(url).toContain('priority=high%2Cmedium');\n      expect(url).toContain('status=pending');\n      expect(url).toContain('tags=work');\n    });\n\n    test('includes selected task in search params', () => {\n      const url = generateCalendarUrl('month', new Date('2024-01-15'), {\n        selectedTaskId: 'task-123'\n      });\n      \n      expect(url).toContain('task=task-123');\n    });\n\n    test('includes search query in search params', () => {\n      const url = generateCalendarUrl('month', new Date('2024-01-15'), {\n        searchQuery: 'test search'\n      });\n      \n      expect(url).toContain('q=test+search');\n    });\n  });\n\n  describe('updateCalendarUrl', () => {\n    test('calls navigate with generated URL', () => {\n      updateCalendarUrl(mockNavigate, 'week', new Date('2024-01-15'));\n      \n      expect(mockNavigate).toHaveBeenCalledWith(\n        '/calendar/week/2024-01-15',\n        { replace: false }\n      );\n    });\n\n    test('uses replace option when specified', () => {\n      updateCalendarUrl(mockNavigate, 'week', new Date('2024-01-15'), {\n        replace: true\n      });\n      \n      expect(mockNavigate).toHaveBeenCalledWith(\n        '/calendar/week/2024-01-15',\n        { replace: true }\n      );\n    });\n  });\n\n  describe('validateCalendarParams', () => {\n    test('validates correct parameters', () => {\n      const params = { view: 'month', date: '2024-01-15' };\n      \n      expect(validateCalendarParams(params)).toBe(true);\n    });\n\n    test('rejects invalid view', () => {\n      const params = { view: 'invalid', date: '2024-01-15' };\n      \n      expect(validateCalendarParams(params)).toBe(false);\n    });\n\n    test('rejects invalid date', () => {\n      const params = { view: 'month', date: 'invalid-date' };\n      \n      expect(validateCalendarParams(params)).toBe(false);\n    });\n\n    test('accepts missing parameters', () => {\n      const params = {};\n      \n      expect(validateCalendarParams(params)).toBe(true);\n    });\n  });\n\n  describe('getCalendarBreadcrumbs', () => {\n    test('generates breadcrumbs for month view', () => {\n      const breadcrumbs = getCalendarBreadcrumbs('month', new Date('2024-01-15'));\n      \n      expect(breadcrumbs).toHaveLength(2);\n      expect(breadcrumbs[0].label).toBe('Calendar');\n      expect(breadcrumbs[1].label).toBe('January 2024');\n    });\n\n    test('generates breadcrumbs for week view', () => {\n      const breadcrumbs = getCalendarBreadcrumbs('week', new Date('2024-01-15'));\n      \n      expect(breadcrumbs).toHaveLength(2);\n      expect(breadcrumbs[0].label).toBe('Calendar');\n      expect(breadcrumbs[1].label).toContain('Week of');\n    });\n\n    test('generates breadcrumbs for day view', () => {\n      const breadcrumbs = getCalendarBreadcrumbs('day', new Date('2024-01-15'));\n      \n      expect(breadcrumbs).toHaveLength(2);\n      expect(breadcrumbs[0].label).toBe('Calendar');\n      expect(breadcrumbs[1].label).toContain('Monday');\n    });\n\n    test('generates breadcrumbs for agenda view', () => {\n      const breadcrumbs = getCalendarBreadcrumbs('agenda', new Date('2024-01-15'));\n      \n      expect(breadcrumbs).toHaveLength(2);\n      expect(breadcrumbs[0].label).toBe('Calendar');\n      expect(breadcrumbs[1].label).toBe('Agenda View');\n    });\n  });\n\n  describe('getShareableCalendarUrl', () => {\n    beforeEach(() => {\n      // Mock window.location.origin\n      delete window.location;\n      window.location = { origin: 'https://example.com' };\n    });\n\n    test('generates shareable URL with origin', () => {\n      const url = getShareableCalendarUrl('month', new Date('2024-01-15'));\n      \n      expect(url).toBe('https://example.com/calendar/month/2024-01-15');\n    });\n\n    test('includes filters in shareable URL', () => {\n      const filters = { priority: ['high'] };\n      const url = getShareableCalendarUrl('month', new Date('2024-01-15'), filters);\n      \n      expect(url).toContain('https://example.com/calendar/month/2024-01-15');\n      expect(url).toContain('priority=high');\n    });\n  });\n\n  describe('parseCalendarUrl', () => {\n    test('parses complete calendar URL', () => {\n      const url = 'https://example.com/calendar/week/2024-01-15?priority=high&status=pending';\n      \n      const result = parseCalendarUrl(url);\n      \n      expect(result.view).toBe('week');\n      expect(result.date).toEqual(new Date('2024-01-15'));\n      expect(result.filters.priority).toEqual(['high']);\n      expect(result.filters.status).toEqual(['pending']);\n    });\n\n    test('handles malformed URLs gracefully', () => {\n      const url = 'not-a-valid-url';\n      \n      const result = parseCalendarUrl(url);\n      \n      expect(result.view).toBe(DEFAULT_VIEW);\n      expect(result.date).toBeInstanceOf(Date);\n      expect(result.filters).toEqual({});\n    });\n\n    test('parses URL without date', () => {\n      const url = 'https://example.com/calendar/month';\n      \n      const result = parseCalendarUrl(url);\n      \n      expect(result.view).toBe('month');\n      expect(result.date).toBeInstanceOf(Date);\n    });\n\n    test('parses URL with search parameters', () => {\n      const url = 'https://example.com/calendar/month?task=123&q=search';\n      \n      const result = parseCalendarUrl(url);\n      \n      expect(result.selectedTaskId).toBe('123');\n      expect(result.searchQuery).toBe('search');\n    });\n  });\n\n  describe('Edge Cases', () => {\n    test('handles empty parameters', () => {\n      const result = parseCalendarParams({}, new URLSearchParams());\n      \n      expect(result.view).toBe(DEFAULT_VIEW);\n      expect(result.date).toBeInstanceOf(Date);\n      expect(result.filters).toEqual({});\n    });\n\n    test('handles null/undefined parameters', () => {\n      const result = parseCalendarParams(null, null);\n      \n      expect(result.view).toBe(DEFAULT_VIEW);\n      expect(result.date).toBeInstanceOf(Date);\n    });\n\n    test('generates URL with empty filters', () => {\n      const url = generateCalendarUrl('month', new Date('2024-01-15'), {\n        filters: {}\n      });\n      \n      expect(url).toBe('/calendar/month/2024-01-15');\n    });\n\n    test('validates parameters with missing view', () => {\n      const params = { date: '2024-01-15' };\n      \n      expect(validateCalendarParams(params)).toBe(true);\n    });\n\n    test('validates parameters with missing date', () => {\n      const params = { view: 'month' };\n      \n      expect(validateCalendarParams(params)).toBe(true);\n    });\n  });\n\n  describe('URL Encoding', () => {\n    test('properly encodes special characters in search query', () => {\n      const url = generateCalendarUrl('month', new Date('2024-01-15'), {\n        searchQuery: 'test & search'\n      });\n      \n      expect(url).toContain('q=test+%26+search');\n    });\n\n    test('properly encodes filter values with special characters', () => {\n      const filters = {\n        tags: ['work & life', 'test/tag']\n      };\n      \n      const url = generateCalendarUrl('month', new Date('2024-01-15'), { filters });\n      \n      expect(url).toContain('tags=work+%26+life%2Ctest%2Ftag');\n    });\n  });\n});

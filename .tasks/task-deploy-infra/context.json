@@ -1,0 +1,30 @@
+{
+  "project_type": "Serverless AWS application (Node.js Express API on Lambda + API Gateway) with Terraform-managed infrastructure",
+  "language": "HCL (Terraform) for infra; Node.js 20 (ESM) for Lambda backend",
+  "build_system": "Terraform >= 1.5.0 (installed v1.9.8 at /usr/local/bin/terraform). Lambda bundles built with npm from backend/ and zipped.",
+  "test_framework": "n/a for infra deployment (jest exists for backend but not used here)",
+  "build_command": "cd infrastructure/environments/dev && terraform init && terraform plan && terraform apply",
+  "test_command": "terraform validate; then post-apply verification via aws CLI + curl on API Gateway /api/health",
+  "verification_instructions": "1) terraform validate passes. 2) terraform apply completes. 3) terraform output resolves (api_gateway_url, cognito ids, cloudfront url, uploads bucket, lambda name). 4) aws lambda get-function on taskly-dev-api succeeds. 5) curl https://<api>/api/health returns JSON (may be 503 DATABASE_UNAVAILABLE until secret host populated, which is acceptable proof of routing+lambda). 6) aws docdb describe-db-clusters shows taskly-dev-docdb-cluster available.",
+  "snapshot_or_generated_files": "Lambda deployment zips built from backend/: deploy/api-handler.zip (index.mjs + lambda/ + server.js + config/controllers/middleware/models/routes/services/utils + node_modules + global-bundle.pem at ROOT), deploy/achievement-processor.zip, deploy/notification-processor.zip, deploy/email-processor.zip. Uploaded to the uploads S3 bucket under deploy/. Rebuild command lives in scripts/build-lambda.sh (to be created).",
+  "setup_instructions": "Terraform CLI installed via releases.hashicorp.com linux_amd64 zip -> /usr/local/bin/terraform. Node 20 available via nvm: source ~/.nvm/nvm.sh && nvm use 20. AWS creds valid (account 583168584925, us-east-1).",
+  "environment_constraints": "OPEN_INTERNET. AWS creds valid. Provisions REAL BILLABLE resources (~$130/mo dev: DocumentDB db.t3.medium, NAT GW, VPC interface endpoints, Lambda, API GW, WAF, CloudFront, cross-region S3 replica). No registered domain / Route53 hosted zone in account -> DR module DNS failover Route53 records CANNOT apply and must be made conditional. SES domain identity for a domain we don't own will be created but stay unverified (does not block apply).",
+  "contribution_requirements": "Do NOT commit real secrets. Secret values (documentdb_master_password, jwt_signing_key) supplied via TF_VAR_ env vars or a gitignored .auto.tfvars. Repo changes committed locally on branch fix/taskly-deployment-issues; orchestrator publishes.",
+  "key_patterns": "Root module in infrastructure/ wired by environments/dev/main.tf (thin wrapper). Root providers.tf defines default + us_east_1 + dr(us-west-2) providers. main.tf lambda module reads zips from module.s3.uploads_bucket_id under deploy/. Backend Lambda uses @vendia/serverless-express; handler=index.handler (index.mjs re-exports lambda/handler.js). Processors handler=lambda/processors/<name>.handler.",
+  "relevant_files": [
+    "infrastructure/backend.tf",
+    "infrastructure/environments/dev/backend.tf",
+    "infrastructure/environments/dev/main.tf",
+    "infrastructure/environments/dev/variables.tf",
+    "infrastructure/environments/dev/terraform.tfvars",
+    "infrastructure/variables.tf",
+    "infrastructure/main.tf",
+    "infrastructure/modules/disaster-recovery/dns-failover.tf",
+    "infrastructure/modules/lambda/main.tf",
+    "backend/index.mjs",
+    "backend/lambda/handler.js",
+    "backend/lambda/processors/",
+    "backend/package.json"
+  ],
+  "directory_structure": "infrastructure/{main,providers,variables,outputs,backend}.tf; infrastructure/environments/{dev,staging,prod}/{main,backend,variables}.tf+terraform.tfvars; infrastructure/modules/<15 modules>. backend/ holds Lambda source. .tasks/ holds task state."
+}

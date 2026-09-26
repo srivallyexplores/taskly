@@ -1,0 +1,301 @@
+###############################################################################
+# Backend Lambda Deployment Workflow
+#
+# Deploys the Taskly backend as a Lambda function with canary deployment.
+# Stages: lint → test → build → package → deploy
+#
+# Canary strategy:
+# - Deploy to $LATEST, create new version
+# - Shift 10% traffic to new version via alias weight
+# - Monitor error rate for 5 minutes
+# - Promote (100% traffic) or rollback automatically
+#
+# : 8.1, 8.4, 8.7, 8.8
+###############################################################################
+
+name: Backend Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: 'us-east-1'
+  NODE_VERSION: '20'
+  FUNCTION_NAME_PREFIX: 'taskly'
+
+jobs:
+  # ─── Lint ───────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run linter
+        run: npm run lint
+        working-directory: backend
+
+  # ─── Test ───────────────────────────────────────────────────────────────────
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      # Run BOTH jest projects (unit + db) so the DB-backed session/auth/avatar
+      # tests gate the deploy. Uses mongodb-memory-server; no external services.
+      - name: Run tests
+        run: npm run test:ci
+        working-directory: backend
+        env:
+          NODE_ENV: test
+
+  # ─── Build & Package ────────────────────────────────────────────────────────
+  package:
+    name: Package Lambda
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    outputs:
+      artifact_name: ${{ steps.package.outputs.artifact_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install production dependencies
+        run: npm ci --omit=dev
+        working-directory: backend
+
+      - name: Download DocumentDB TLS certificate
+        run: curl -o global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+        working-directory: backend
+
+      - name: Package Lambda function
+        id: package
+        working-directory: backend
+        run: |
+          ARTIFACT_NAME="lambda-backend-${{ github.sha }}.zip"
+          echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+
+          # Create deployment package excluding test/dev files
+          zip -r "../${ARTIFACT_NAME}" . \
+            -x "tests/*" \
+            -x "*.test.js" \
+            -x "*.spec.js" \
+            -x ".env*" \
+            -x "jest.config.*" \
+            -x "babel.config.*" \
+            -x "coverage/*" \
+            -x "seeds/*" \
+            -x "seed.js" \
+            -x "test-seed.js" \
+            -x ".git/*"
+
+          echo "Package size: $(du -h ../${ARTIFACT_NAME} | cut -f1)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-package
+          path: ${{ steps.package.outputs.artifact_name }}
+          retention-days: 14
+
+  # ─── Deploy with Canary ─────────────────────────────────────────────────────
+  deploy:
+    name: Deploy (Canary)
+    runs-on: ubuntu-latest
+    needs: package
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package
+
+      - name: Upload to S3
+        run: |
+          ARTIFACT_NAME="${{ needs.package.outputs.artifact_name }}"
+          aws s3 cp "${ARTIFACT_NAME}" \
+            "s3://${{ vars.LAMBDA_DEPLOY_BUCKET }}/${ARTIFACT_NAME}"
+
+      - name: Update Lambda function code
+        id: update
+        run: |
+          FUNCTION_NAME="${{ env.FUNCTION_NAME_PREFIX }}-prod-api"
+          ARTIFACT_NAME="${{ needs.package.outputs.artifact_name }}"
+
+          # Update function code (don't publish yet)
+          aws lambda update-function-code \
+            --function-name "${FUNCTION_NAME}" \
+            --s3-bucket "${{ vars.LAMBDA_DEPLOY_BUCKET }}" \
+            --s3-key "${ARTIFACT_NAME}" \
+            --output json > update-result.json
+
+          # Wait for update to fully propagate
+          aws lambda wait function-updated --function-name "${FUNCTION_NAME}"
+
+          # Now publish a new version from the stable code
+          NEW_VERSION=$(aws lambda publish-version \
+            --function-name "${FUNCTION_NAME}" \
+            --query 'Version' --output text)
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Deployed version: ${NEW_VERSION}"
+
+      - name: Canary — Shift 10% traffic
+        run: |
+          FUNCTION_NAME="${{ env.FUNCTION_NAME_PREFIX }}-prod-api"
+          NEW_VERSION="${{ steps.update.outputs.new_version }}"
+
+          # Get current alias version
+          CURRENT_VERSION=$(aws lambda get-alias \
+            --function-name "${FUNCTION_NAME}" \
+            --name live \
+            --query 'FunctionVersion' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "${CURRENT_VERSION}" ] || [ "${CURRENT_VERSION}" = "None" ]; then
+            # First deployment — create alias pointing to new version
+            aws lambda create-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name live \
+              --function-version "${NEW_VERSION}"
+          else
+            # Canary: 90% old, 10% new
+            aws lambda update-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name live \
+              --function-version "${CURRENT_VERSION}" \
+              --routing-config "AdditionalVersionWeights={\"${NEW_VERSION}\"=0.1}"
+          fi
+
+          echo "Canary deployed: 10% traffic to version ${NEW_VERSION}"
+
+      - name: Canary — Monitor errors (5 minutes)
+        id: monitor
+        run: |
+          FUNCTION_NAME="${{ env.FUNCTION_NAME_PREFIX }}-prod-api"
+          NEW_VERSION="${{ steps.update.outputs.new_version }}"
+
+          echo "Monitoring error rate for 5 minutes..."
+          sleep 300
+
+          # Check error rate for the new version
+          ERRORS=$(aws cloudwatch get-metric-statistics \
+            --namespace "AWS/Lambda" \
+            --metric-name "Errors" \
+            --dimensions "Name=FunctionName,Value=${FUNCTION_NAME}" "Name=Resource,Value=${FUNCTION_NAME}:${NEW_VERSION}" \
+            --start-time "$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S)" \
+            --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+            --period 300 \
+            --statistics Sum \
+            --query 'Datapoints[0].Sum' \
+            --output text 2>/dev/null || echo "0")
+
+          INVOCATIONS=$(aws cloudwatch get-metric-statistics \
+            --namespace "AWS/Lambda" \
+            --metric-name "Invocations" \
+            --dimensions "Name=FunctionName,Value=${FUNCTION_NAME}" "Name=Resource,Value=${FUNCTION_NAME}:${NEW_VERSION}" \
+            --start-time "$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S)" \
+            --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+            --period 300 \
+            --statistics Sum \
+            --query 'Datapoints[0].Sum' \
+            --output text 2>/dev/null || echo "0")
+
+          # Calculate error rate
+          if [ "${INVOCATIONS}" != "0" ] && [ "${INVOCATIONS}" != "None" ] && [ -n "${INVOCATIONS}" ]; then
+            ERROR_RATE=$(echo "scale=2; ${ERRORS:-0} / ${INVOCATIONS} * 100" | bc)
+          else
+            ERROR_RATE="0"
+          fi
+
+          echo "Error rate: ${ERROR_RATE}% (${ERRORS:-0} errors / ${INVOCATIONS:-0} invocations)"
+
+          # Fail if error rate > 1%
+          if (( $(echo "${ERROR_RATE} > 1" | bc -l) )); then
+            echo "rollback=true" >> $GITHUB_OUTPUT
+            echo "::error::Error rate ${ERROR_RATE}% exceeds 1% threshold — rolling back"
+          else
+            echo "rollback=false" >> $GITHUB_OUTPUT
+            echo "Canary passed — promoting to 100%"
+          fi
+
+      - name: Canary — Promote or Rollback
+        run: |
+          FUNCTION_NAME="${{ env.FUNCTION_NAME_PREFIX }}-prod-api"
+          NEW_VERSION="${{ steps.update.outputs.new_version }}"
+
+          if [ "${{ steps.monitor.outputs.rollback }}" = "true" ]; then
+            # Rollback: remove routing config (alias stays on previous version)
+            CURRENT_VERSION=$(aws lambda get-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name live \
+              --query 'FunctionVersion' \
+              --output text)
+
+            aws lambda update-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name live \
+              --function-version "${CURRENT_VERSION}" \
+              --routing-config 'AdditionalVersionWeights={}'
+
+            echo "::error::Rolled back to version ${CURRENT_VERSION}"
+            exit 1
+          else
+            # Promote: shift 100% to new version
+            aws lambda update-alias \
+              --function-name "${FUNCTION_NAME}" \
+              --name live \
+              --function-version "${NEW_VERSION}" \
+              --routing-config 'AdditionalVersionWeights={}'
+
+            echo "Promoted version ${NEW_VERSION} to 100% traffic"
+          fi
+
+      - name: Post deploy summary
+        if: always()
+        run: |
+          echo "## Backend Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.update.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

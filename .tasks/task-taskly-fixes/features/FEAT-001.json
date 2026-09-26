@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Establish and document the working baseline. Install backend and frontend dependencies, run the existing test suites and lint, and record exact pass/fail counts so later features can prove improvement. No source changes in this feature except capturing baseline notes into findings. Node is NOT on the default PATH; it lives at /opt/toolchains/.nvm/versions/node/v22.23.2/bin.",
+  "status": "completed",
+  "steps": [
+    "Run: export PATH=/opt/toolchains/.nvm/versions/node/v22.23.2/bin:$PATH && node --version (expect v22.x).",
+    "Install backend deps: (cd backend && npm install). Install frontend deps: (cd frontend && npm install).",
+    "Run backend tests: (cd backend && npm test) and record the final 'Tests:' and 'Test Suites:' summary lines (baseline observed: 88 failed, 62 passed, 11 skipped; 16 suites failed).",
+    "Run backend lint: (cd backend && npm run lint) and record that it fails with 'ESLint couldn't find an eslint.config file' (no config present).",
+    "Run frontend tests: (cd frontend && npm test) and record the summary (baseline observed: ~233 failed, ~156 passed).",
+    "Run frontend build: (cd frontend && npm run build) and record whether it succeeds.",
+    "Write all recorded numbers into this feature's findings field so subsequent features can compare before/after."
+  ],
+  "acceptance_criteria": [
+    "Backend and frontend node_modules are installed without fatal errors.",
+    "The findings field contains the exact baseline test/lint/build results for backend and frontend."
+  ],
+  "verification": [
+    "export PATH=/opt/toolchains/.nvm/versions/node/v22.23.2/bin:$PATH && cd backend && npm test 2>&1 | tail -5",
+    "export PATH=/opt/toolchains/.nvm/versions/node/v22.23.2/bin:$PATH && cd frontend && npm run build 2>&1 | tail -5"
+  ],
+  "blocked_reason": null,
+  "findings": "Baseline captured on Node v22.23.2 / npm 11.4.2 (PATH=/opt/toolchains/.nvm/versions/node/v22.23.2/bin). Dependency install: backend `npm install` OK (up to date, 829 packages audited, 47 vulns reported, no fatal errors); frontend `npm install` OK (added 55 packages, 360 audited, 17 vulns, no fatal errors).\n\nBACKEND TESTS (cd backend && npm test): Test Suites: 16 failed, 1 skipped, 4 passed, 20 of 21 total. Tests: 88 failed, 11 skipped, 62 passed, 161 total. Time ~12.5s. Ran 2 projects (unit + db). Many suites fail at 'Test suite failed to run - Jest worker encountered 4 child process exceptions, exceeding retry limit' (e.g. tests/integration/auth.test.js, tests/unit/lambda-handler.test.js) plus stale suites using undefined globals. Matches expected baseline exactly.\n\nBACKEND LINT (cd backend && npm run lint): FAILS. ESLint v10.8.0 reports: \"ESLint couldn't find an eslint.config.(js|mjs|cjs) file. From ESLint v9.0.0, the default configuration file is now eslint.config.js.\" No eslint config present in backend/. Confirms baseline hard failure.\n\nFRONTEND TESTS (cd frontend && npm test, Vitest): Test Files: 63 failed | 4 passed (67 total). Tests: 233 failed | 156 passed (389 total). Duration ~14.8s. Sample failures include Testing Library label lookups (e.g. src/components/ui/__tests__/Input.test.jsx 'Unable to find a label with the text of: /password/i'). Matches expected ~233 failed / ~156 passed baseline.\n\nFRONTEND BUILD (cd frontend && npm run build, Vite 7): SUCCEEDS (exit 0, 'built in ~3.7s'). Output written to dist/ (gitignored); largest chunks index ~296.66 kB and vendor ~163.80 kB.\n\nSUMMARY BASELINE FOR COMPARISON: backend tests 88 failed / 62 passed / 11 skipped (16 suites failed, 4 passed, 1 skipped); backend lint fails (no eslint.config); frontend tests 233 failed / 156 passed (63 files failed, 4 passed); frontend build passes."
+}

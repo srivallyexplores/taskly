@@ -1,0 +1,15 @@
+{
+  "task_id": "task-deploy-infra",
+  "task_description": "Deploy the Taskly AWS infrastructure (dev environment) to a working state via Terraform. Reconcile the state backend, create the missing lock table, wire required root-module variables through the dev wrapper, make the disaster-recovery Route53 DNS failover conditional (account owns no hosted zone), build and stage the four Lambda deployment zips (resolving the uploads-bucket chicken-and-egg via targeted apply), then full apply and verify (outputs, Lambda active, DocumentDB available, API Gateway /api/health responds, CloudFront exists). Provisions real billable resources (~$130/mo). Report the maximal working subset plus any manual prerequisites (SES domain verification, DNS failover) that require a domain the account does not own.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "Independently verified the deployed dev stack. `terraform validate` succeeds (only pre-existing benign S3 lifecycle deprecation warnings). `terraform plan -detailed-exitcode` returns exit 0 with 'No changes' (fully converged/idempotent). Lambda taskly-dev-api State=Active/Successful (nodejs20.x, index.handler); all three processor Lambdas Active. DocumentDB taskly-dev-docdb-cluster status=available. `terraform output` resolves: api_gateway_url=https://bvju0gyni7.execute-api.us-east-1.amazonaws.com, cognito_user_pool_id=us-east-1_l0jRjqILW, cognito_client_id=a1i9m0h2tqf5hu2ddpsq6bcdf, s3_uploads_bucket=taskly-dev-uploads-583168584925, lambda_function_name=taskly-dev-api, cloudfront_frontend_url=\"\" (disabled). curl https://bvju0gyni7.execute-api.us-east-1.amazonaws.com/api/health => HTTP 200 with {\"status\":\"OK\",...,\"database\":\"connected\"}, proving the full API Gateway -> Lambda(VPC) -> DocumentDB path. 'build/test' here map to terraform validate+plan since this is an infra deployment task (no unit-test suite is exercised). No real secrets committed; working tree clean.",
+    "notes": "Blocked-off subsets (documented, require account prerequisites the account lacks, not fabricated): CloudFront disabled until AWS Support account verification; SES identity for taskly.app stays pending (account does not own the domain); Route53 DNS failover skipped (no hosted zone); WAF WebACL created but not attached (WAFv2 cannot associate with HTTP API v2). Full remediation in DEPLOYMENT_REPORT.md."
+  }
+}

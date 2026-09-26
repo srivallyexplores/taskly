@@ -1,0 +1,394 @@
+/* Mobile Responsive Styles for Team Collaboration Components */
+
+/* Team Dashboard Mobile Optimizations */
+@media (max-width: 768px) {
+  .team-dashboard {
+    @apply px-4 py-6;
+  }
+
+  .team-dashboard .stats-grid {
+    @apply grid-cols-1 gap-4;
+  }
+
+  .team-dashboard .chart-container {
+    @apply h-64;
+  }
+
+  .team-dashboard .member-grid {
+    @apply grid-cols-1 gap-3;
+  }
+
+  .team-dashboard .project-grid {
+    @apply grid-cols-1 gap-4;
+  }
+}
+
+/* Team Settings Mobile Optimizations */
+@media (max-width: 768px) {
+  .team-settings {
+    @apply px-4 py-6;
+  }
+
+  .team-settings .form-grid {
+    @apply grid-cols-1 gap-4;
+  }
+
+  .team-settings .member-list {
+    @apply space-y-3;
+  }
+
+  .team-settings .member-item {
+    @apply flex-col items-start space-y-2 p-3;
+  }
+
+  .team-settings .member-actions {
+    @apply flex-row space-x-2 space-y-0 w-full justify-end;
+  }
+
+  .team-settings .danger-zone {
+    @apply p-4;
+  }
+}
+
+/* Project Dashboard Mobile Optimizations */
+@media (max-width: 768px) {
+  .project-dashboard {
+    @apply px-4 py-6;
+  }
+
+  .project-dashboard .header-actions {
+    @apply flex-col space-y-2 space-x-0 w-full;
+  }
+
+  .project-dashboard .info-bar {
+    @apply grid-cols-1 gap-3;
+  }
+
+  .project-dashboard .timeline {
+    @apply px-2;
+  }
+
+  .project-dashboard .member-avatars {
+    @apply flex-wrap;
+  }
+}
+
+/* Member List Mobile Optimizations */
+@media (max-width: 768px) {
+  .member-list {
+    @apply px-4;
+  }
+
+  .member-list .filters {
+    @apply flex-col space-y-3 space-x-0;
+  }
+
+  .member-list .view-toggle {
+    @apply hidden;
+  }
+
+  .member-list .member-grid {
+    @apply grid-cols-1 gap-4;
+  }
+
+  .member-card {
+    @apply p-4;
+  }
+
+  .member-card.list-view {
+    @apply flex-col items-start space-y-3;
+  }
+
+  .member-card .member-info {
+    @apply flex-col items-start space-y-1;
+  }
+
+  .member-card .member-actions {
+    @apply flex-row space-x-2 w-full justify-end;
+  }
+}
+
+/* Invite Modal Mobile Optimizations */
+@media (max-width: 768px) {
+  .invite-modal {
+    @apply mx-4 my-8 max-w-none;
+  }
+
+  .invite-modal .method-selection {
+    @apply flex-col space-y-3 space-x-0;
+  }
+
+  .invite-modal .email-fields {
+    @apply space-y-3;
+  }
+
+  .invite-modal .email-row {
+    @apply flex-col space-y-2 space-x-0;
+  }
+
+  .invite-modal .invite-link {
+    @apply text-xs break-all;
+  }
+}
+
+/* Task Form Mobile Optimizations */
+@media (max-width: 768px) {
+  .task-form .collaboration-section {
+    @apply p-3;
+  }
+
+  .task-form .collaboration-grid {
+    @apply grid-cols-1 gap-4;
+  }
+
+  .task-form .assignee-info {
+    @apply flex-col items-start space-y-1;
+  }
+}
+
+/* Task Comments Mobile Optimizations */
+@media (max-width: 768px) {
+  .task-comments {
+    @apply px-2;
+  }
+
+  .task-comments .comment-item {
+    @apply flex-col space-y-2 space-x-0;
+  }
+
+  .task-comments .comment-header {
+    @apply flex-col items-start space-y-1;
+  }
+
+  .task-comments .comment-actions {
+    @apply self-end;
+  }
+
+  .task-comments .mention-dropdown {
+    @apply left-0 right-0 mx-4;
+  }
+
+  .task-comments .new-comment {
+    @apply space-y-3;
+  }
+
+  .task-comments .comment-footer {
+    @apply flex-col space-y-2 items-start;
+  }
+}
+
+/* Analytics Mobile Optimizations */
+@media (max-width: 768px) {
+  .team-analytics {
+    @apply px-4 py-6;
+  }
+
+  .team-analytics .header {
+    @apply flex-col space-y-3 items-start;
+  }
+
+  .team-analytics .metric-tabs {
+    @apply flex-wrap gap-2;
+  }
+
+  .team-analytics .chart-grid {
+    @apply grid-cols-1 gap-6;
+  }
+
+  .team-analytics .chart-container {
+    @apply h-64 p-4;
+  }
+
+  .team-analytics .stats-row {
+    @apply grid-cols-1 gap-4;
+  }
+}
+
+/* Notifications Mobile Optimizations */
+@media (max-width: 768px) {
+  .notification-center {
+    @apply left-0 right-0 mx-4 max-w-none;
+  }
+
+  .notification-center .controls {
+    @apply flex-col space-y-3;
+  }
+
+  .notification-center .filters {
+    @apply flex-wrap gap-2;
+  }
+
+  .notification-center .notification-item {
+    @apply p-3;
+  }
+
+  .notification-center .notification-content {
+    @apply space-y-2;
+  }
+
+  .team-notifications .dropdown {
+    @apply left-0 right-0 mx-4 max-w-none;
+  }
+}
+
+/* Navigation Mobile Optimizations */
+@media (max-width: 768px) {
+  .navigation .team-section {
+    @apply space-y-2;
+  }
+
+  .navigation .team-list {
+    @apply space-y-1;
+  }
+
+  .navigation .team-item {
+    @apply text-sm py-2;
+  }
+
+  .navigation .project-section {
+    @apply space-y-2;
+  }
+
+  .navigation .project-list {
+    @apply space-y-1;
+  }
+
+  .navigation .project-item {
+    @apply text-sm py-2;
+  }
+}
+
+/* General Mobile Touch Optimizations */
+@media (max-width: 768px) {
+  /* Increase touch targets */
+  .btn, button {
+    @apply min-h-[44px] px-4;
+  }
+
+  /* Improve form inputs */
+  input, select, textarea {
+    @apply min-h-[44px] text-base;
+  }
+
+  /* Better spacing for touch */
+  .clickable-item {
+    @apply min-h-[44px] py-3;
+  }
+
+  /* Improve modal sizing */
+  .modal {
+    @apply mx-4 my-8;
+  }
+
+  /* Better dropdown positioning */
+  .dropdown {
+    @apply max-w-[calc(100vw-2rem)];
+  }
+
+  /* Improve table responsiveness */
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+
+  .table-responsive table {
+    @apply min-w-full;
+  }
+
+  /* Better card layouts */
+  .card-grid {
+    @apply grid-cols-1 gap-4;
+  }
+
+  /* Improve text readability */
+  .text-responsive {
+    @apply text-base leading-relaxed;
+  }
+
+  /* Better image sizing */
+  .avatar-responsive {
+    @apply w-10 h-10;
+  }
+
+  /* Improve spacing */
+  .section-spacing {
+    @apply py-6 px-4;
+  }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .team-dashboard .stats-grid {
+    @apply grid-cols-2;
+  }
+
+  .team-dashboard .chart-container {
+    @apply h-80;
+  }
+
+  .member-list .member-grid {
+    @apply grid-cols-2;
+  }
+
+  .project-dashboard .info-bar {
+    @apply grid-cols-2;
+  }
+
+  .team-analytics .chart-grid {
+    @apply grid-cols-1 lg:grid-cols-2;
+  }
+}
+
+/* Landscape Phone Optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  .team-dashboard .stats-grid {
+    @apply grid-cols-2;
+  }
+
+  .member-list .member-grid {
+    @apply grid-cols-2;
+  }
+
+  .team-analytics .stats-row {
+    @apply grid-cols-2;
+  }
+}
+
+/* High DPI Display Optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .avatar, .team-icon, .project-icon {
+    @apply ring-1 ring-black ring-opacity-5;
+  }
+}
+
+/* Accessibility Improvements for Mobile */
+@media (max-width: 768px) {
+  /* Focus indicators */
+  .focus-visible {
+    @apply ring-2 ring-primary-500 ring-offset-2;
+  }
+
+  /* Better contrast for small screens */
+  .text-secondary {
+    @apply text-secondary-700 dark:text-secondary-200;
+  }
+
+  /* Larger interactive elements */
+  .interactive {
+    @apply min-w-[44px] min-h-[44px];
+  }
+}
+
+/* Print Styles for Mobile */
+@media print {
+  .team-dashboard, .project-dashboard {
+    @apply text-black bg-white;
+  }
+
+  .no-print {
+    @apply hidden;
+  }
+
+  .print-break {
+    @apply break-after-page;
+  }
+}

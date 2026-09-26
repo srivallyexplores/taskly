@@ -1,0 +1,45 @@
+{
+  "name": "taskly",
+  "version": "1.0.0",
+  "description": "Task app",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:all": "npm run build:backend && npm run build",
+    "install-deps": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "start": "cd backend && npm start",
+    "start:prod": "cd backend && npm run prod",
+    "test": "cd backend && npm test && cd ../frontend && npm run test",
+    "test:coverage": "cd backend && npm run test:coverage && cd ../frontend && npm run test:coverage",
+    "lint": "cd backend && npm run lint && cd ../frontend && npm run lint",
+    "lint:fix": "cd backend && npm run lint:fix && cd ../frontend && npm run lint:fix",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "pm2:start": "cd backend && npm run pm2:start",
+    "pm2:stop": "cd backend && npm run pm2:stop",
+    "pm2:restart": "cd backend && npm run pm2:restart",
+    "pm2:logs": "cd backend && npm run pm2:logs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suletetes/taskly.git"
+  },
+  "author": "suleiman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/suletetes/taskly/issues"
+  },
+  "homepage": "https://github.com/suletetes/taskly#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "axios": "^1.12.2"
+  }
+}

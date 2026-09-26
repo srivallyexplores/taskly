@@ -1,0 +1,361 @@
+/* Calendar Responsive Styles */
+
+/* Mobile-first approach */
+.calendar-responsive {
+  @apply w-full;
+}
+
+/* Mobile styles (default) */
+@media (max-width: 767px) {
+  .calendar-grid {
+    @apply grid-cols-1 gap-2;
+  }
+  
+  .calendar-header {
+    @apply flex-col space-y-3;
+  }
+  
+  .calendar-header .header-actions {
+    @apply flex-wrap justify-center gap-2;
+  }
+  
+  .calendar-task-card {
+    @apply text-xs p-2;
+  }
+  
+  .calendar-task-card .task-title {
+    @apply truncate;
+  }
+  
+  .calendar-filters {
+    @apply p-3;
+  }
+  
+  .calendar-filters .filter-section {
+    @apply grid-cols-1 gap-2;
+  }
+  
+  .calendar-search {
+    @apply w-full;
+  }
+  
+  .calendar-view-selector {
+    @apply flex-wrap justify-center;
+  }
+  
+  .calendar-navigation {
+    @apply space-x-2;
+  }
+  
+  .calendar-date-picker {
+    @apply w-full;
+  }
+  
+  /* Month view mobile */
+  .month-view-mobile {
+    @apply grid-cols-7 gap-1;
+  }
+  
+  .month-view-mobile .date-cell {
+    @apply aspect-square p-1 text-xs;
+  }
+  
+  .month-view-mobile .task-indicator {
+    @apply w-1 h-1;
+  }
+  
+  /* Week view mobile */
+  .week-view-mobile {
+    @apply flex-col;
+  }
+  
+  .week-view-mobile .time-column {
+    @apply hidden;
+  }
+  
+  .week-view-mobile .day-column {
+    @apply min-h-0;
+  }
+  
+  /* Day view mobile */
+  .day-view-mobile .time-slot {
+    @apply h-12 text-xs;
+  }
+  
+  /* Agenda view mobile */
+  .agenda-view-mobile .task-group {
+    @apply p-3;
+  }
+  
+  .agenda-view-mobile .task-item {
+    @apply text-sm;
+  }
+  
+  /* Touch-friendly interactions */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .swipe-container {
+    @apply overflow-hidden;
+  }
+  
+  /* Mobile modals */
+  .mobile-modal {
+    @apply fixed inset-0 z-50;
+  }
+  
+  .mobile-modal .modal-content {
+    @apply h-full overflow-y-auto;
+  }
+  
+  .mobile-sheet {
+    @apply fixed bottom-0 left-0 right-0 z-50 rounded-t-xl;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .calendar-grid {
+    @apply grid-cols-2 gap-4;
+  }
+  
+  .calendar-header {
+    @apply flex-row items-center justify-between;
+  }
+  
+  .calendar-task-card {
+    @apply text-sm p-3;
+  }
+  
+  .calendar-filters .filter-section {
+    @apply grid-cols-2 gap-3;
+  }
+  
+  .calendar-search {
+    @apply max-w-md;
+  }
+  
+  /* Month view tablet */
+  .month-view-tablet .date-cell {
+    @apply p-2;
+  }
+  
+  .month-view-tablet .task-indicator {
+    @apply w-2 h-2;
+  }
+  
+  /* Week view tablet */
+  .week-view-tablet .time-column {
+    @apply block w-16;
+  }
+  
+  .week-view-tablet .day-column {
+    @apply min-h-[600px];
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1024px) {
+  .calendar-grid {
+    @apply grid-cols-3 gap-6;
+  }
+  
+  .calendar-header {
+    @apply flex-row items-center justify-between;
+  }
+  
+  .calendar-task-card {
+    @apply text-sm p-4;
+  }
+  
+  .calendar-filters .filter-section {
+    @apply grid-cols-3 gap-4;
+  }
+  
+  .calendar-search {
+    @apply max-w-lg;
+  }
+  
+  /* Month view desktop */
+  .month-view-desktop .date-cell {
+    @apply p-3 min-h-[120px];
+  }
+  
+  .month-view-desktop .task-indicator {
+    @apply w-3 h-3;
+  }
+  
+  /* Week view desktop */
+  .week-view-desktop .time-column {
+    @apply block w-20;
+  }
+  
+  .week-view-desktop .day-column {
+    @apply min-h-[800px];
+  }
+  
+  /* Hover effects for desktop */
+  .calendar-task-card:hover {
+    @apply transform scale-105 shadow-lg;
+  }
+  
+  .date-cell:hover {
+    @apply bg-secondary-50 dark:bg-secondary-800;
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1280px) {
+  .calendar-grid {
+    @apply grid-cols-4 gap-8;
+  }
+  
+  .calendar-filters .filter-section {
+    @apply grid-cols-4 gap-6;
+  }
+  
+  .calendar-search {
+    @apply max-w-xl;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .calendar-task-card {
+    @apply border-2;
+  }
+  
+  .task-indicator {
+    @apply border-2;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 767px) and (orientation: landscape) {
+  .calendar-mobile-landscape {
+    @apply flex-row;
+  }
+  
+  .calendar-mobile-landscape .sidebar {
+    @apply w-1/3;
+  }
+  
+  .calendar-mobile-landscape .main-content {
+    @apply flex-1;
+  }
+}
+
+/* Print styles */
+@media print {
+  .calendar-page {
+    @apply text-black bg-white;
+  }
+  
+  .calendar-header .header-actions {
+    @apply hidden;
+  }
+  
+  .calendar-task-card {
+    @apply border border-gray-300 bg-white text-black;
+  }
+  
+  .floating-action-button {
+    @apply hidden;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .calendar-animation {
+    @apply transition-none;
+  }
+  
+  .swipe-animation {
+    @apply transform-none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .calendar-task-card {
+    @apply border-2 border-black;
+  }
+  
+  .date-cell {
+    @apply border border-gray-600;
+  }
+  
+  .task-indicator {
+    @apply bg-black;
+  }
+}
+
+/* Dark mode specific responsive adjustments */
+@media (prefers-color-scheme: dark) {
+  .calendar-mobile .modal-content {
+    @apply bg-gray-900;
+  }
+  
+  .calendar-task-card {
+    @apply border-gray-600;
+  }
+}
+
+/* Focus styles for accessibility */
+.calendar-focusable:focus {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+}
+
+.calendar-focusable:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+}
+
+/* Touch feedback */
+.calendar-touchable:active {
+  @apply transform scale-95;
+}
+
+/* Loading states */
+.calendar-loading {
+  @apply animate-pulse;
+}
+
+.calendar-loading .skeleton {
+  @apply bg-gray-300 dark:bg-gray-700 rounded;
+}
+
+/* Error states */
+.calendar-error {
+  @apply border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700;
+}
+
+/* Success states */
+.calendar-success {
+  @apply border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700;
+}
+
+/* Utility classes for responsive behavior */
+.hide-mobile {
+  @apply hidden md:block;
+}
+
+.hide-desktop {
+  @apply block md:hidden;
+}
+
+.mobile-only {
+  @apply block md:hidden;
+}
+
+.desktop-only {
+  @apply hidden md:block;
+}
+
+.tablet-up {
+  @apply hidden md:block;
+}
+
+.mobile-tablet {
+  @apply block lg:hidden;
+}
