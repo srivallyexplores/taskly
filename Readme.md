@@ -17,17 +17,17 @@ Built with React, Express, MongoDB, and deployed on AWS serverless infrastructur
 
 ## Tech stack
 
-| Layer | Technology |
-|-------|-----------|
+| Layer    | Technology                                  |
+| -------- | ------------------------------------------- |
 | Frontend | React 18, Vite, Tailwind CSS, Framer Motion |
-| Backend | Node.js, Express, Mongoose |
-| Database | MongoDB (DocumentDB in production) |
-| Auth | Session-based (local), Cognito JWT (AWS) |
-| Storage | Cloudinary (images), S3 (production) |
-| Email | Resend (local), SES (production) |
-| Infra | Lambda, API Gateway, CloudFront, VPC, WAF |
-| IaC | Terraform (12 modules) |
-| CI/CD | GitHub Actions with OIDC |
+| Backend  | Node.js, Express, Mongoose                  |
+| Database | MongoDB (DocumentDB in production)          |
+| Auth     | Session-based (local), Cognito JWT (AWS)    |
+| Storage  | Cloudinary (images), S3 (production)        |
+| Email    | Resend (local), SES (production)            |
+| Infra    | Lambda, API Gateway, CloudFront, VPC, WAF   |
+| IaC      | Terraform (12 modules)                      |
+| CI/CD    | GitHub Actions with OIDC                    |
 
 ## Architecture
 
@@ -127,6 +127,7 @@ taskly/
 ## API endpoints
 
 ### Auth
+
 ```
 POST   /api/auth/register
 POST   /api/auth/login
@@ -135,6 +136,7 @@ GET    /api/auth/profile
 ```
 
 ### Tasks
+
 ```
 POST   /api/users/:userId/tasks
 GET    /api/users/:userId/tasks
@@ -143,6 +145,7 @@ DELETE /api/tasks/:id
 ```
 
 ### Teams
+
 ```
 GET    /api/teams
 POST   /api/teams
@@ -154,6 +157,7 @@ POST   /api/teams/join/:inviteCode
 ```
 
 ### Projects
+
 ```
 GET    /api/projects
 POST   /api/projects
@@ -165,6 +169,7 @@ GET    /api/projects/:id/stats
 ```
 
 ### Other
+
 ```
 GET    /api/health
 POST   /api/upload/avatar
@@ -198,22 +203,23 @@ VITE_API_URL=http://localhost:5000/api
 
 The `infrastructure/` directory contains Terraform modules for full AWS deployment:
 
-| Module | Resources |
-|--------|-----------|
-| `vpc` | VPC, subnets (public/private), NAT GW, security groups |
-| `lambda` | API handler, image processor, email processor |
-| `iam` | Lambda execution role, least-privilege policies |
-| `api-gateway` | HTTP API, Lambda integration, CORS |
-| `documentdb` | Cluster, instances, subnet group |
-| `s3` | Frontend bucket, uploads bucket, lifecycle rules |
-| `cloudfront` | CDN distributions for frontend and uploads |
-| `waf` | Rate limiting, IP reputation, SQL injection rules |
-| `ses` | Email sending, domain verification |
-| `secrets` | Secrets Manager with KMS encryption |
-| `monitoring` | CloudWatch alarms, dashboards, SNS alerts |
-| `disaster-recovery` | Cross-region replication, DNS failover |
+| Module              | Resources                                              |
+| ------------------- | ------------------------------------------------------ |
+| `vpc`               | VPC, subnets (public/private), NAT GW, security groups |
+| `lambda`            | API handler, image processor, email processor          |
+| `iam`               | Lambda execution role, least-privilege policies        |
+| `api-gateway`       | HTTP API, Lambda integration, CORS                     |
+| `documentdb`        | Cluster, instances, subnet group                       |
+| `s3`                | Frontend bucket, uploads bucket, lifecycle rules       |
+| `cloudfront`        | CDN distributions for frontend and uploads             |
+| `waf`               | Rate limiting, IP reputation, SQL injection rules      |
+| `ses`               | Email sending, domain verification                     |
+| `secrets`           | Secrets Manager with KMS encryption                    |
+| `monitoring`        | CloudWatch alarms, dashboards, SNS alerts              |
+| `disaster-recovery` | Cross-region replication, DNS failover                 |
 
 Deploy:
+
 ```bash
 cd infrastructure
 terraform init
@@ -249,6 +255,7 @@ cd frontend && npm run lint
 ## Author
 
 **Suleiman Abdulkadir** [GitHub](https://github.com/suletetes)
+
 ```bash
 # Backend
 cd backend
@@ -316,23 +323,23 @@ docker-compose down
 
 ### Backend Required Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment | `production` |
-| `PORT` | Server port | `5000` |
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/taskly` |
-| `SESSION_SECRET` | Session secret key | `random-secret-key` |
-| `FRONTEND_URL` | Frontend URL for CORS | `https://yourdomain.com` |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | `your-cloud` |
-| `CLOUDINARY_API_KEY` | Cloudinary API key | `123456789` |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret | `secret` |
-| `RESEND_API_KEY` | Resend API key | `re_xxx` |
-| `EMAIL_FROM` | From email address | `noreply@yourdomain.com` |
+| Variable                | Description               | Example                            |
+| ----------------------- | ------------------------- | ---------------------------------- |
+| `NODE_ENV`              | Environment               | `production`                       |
+| `PORT`                  | Server port               | `5000`                             |
+| `MONGODB_URI`           | MongoDB connection string | `mongodb://localhost:27017/taskly` |
+| `SESSION_SECRET`        | Session secret key        | `random-secret-key`                |
+| `FRONTEND_URL`          | Frontend URL for CORS     | `https://yourdomain.com`           |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name     | `your-cloud`                       |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key        | `123456789`                        |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret     | `secret`                           |
+| `RESEND_API_KEY`        | Resend API key            | `re_xxx`                           |
+| `EMAIL_FROM`            | From email address        | `noreply@yourdomain.com`           |
 
 ### Frontend Required Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
+| Variable       | Description     | Example                          |
+| -------------- | --------------- | -------------------------------- |
 | `VITE_API_URL` | Backend API URL | `https://api.yourdomain.com/api` |
 
 ## Security
@@ -357,35 +364,38 @@ docker-compose down
 - CDN for static assets
 - Optimized bundle size
 
-
 ## Troubleshooting
 
 ### Common Issues
 
 **Database connection failed**
+
 - Ensure MongoDB is running
 - Check connection string in `.env`
 - Verify network connectivity
 
 **CORS errors**
+
 - Check `FRONTEND_URL` in backend `.env`
 - Verify frontend is running on correct port
 - Check CORS configuration in `server.js`
 
 **Session not persisting**
+
 - Verify `SESSION_SECRET` is set
 - Check MongoDB connection for session store
 - Clear browser cookies
 
 **File upload fails**
+
 - Verify Cloudinary credentials
 - Check file size limits
 - Ensure proper MIME types
 
 For more troubleshooting, see:
+
 - [Backend README](./backend/README.md)
 - [Frontend README](./frontend/README.md)
-
 
 ## Links
 
